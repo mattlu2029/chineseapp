@@ -2189,8 +2189,8 @@ const HSK_LEVELS = [1,2,3];
 // Leave both blank to run in LOCAL demo mode (accounts stored in this browser,
 // passwords hashed with PBKDF2). The app and its UI behave identically either way.
 //
-const SUPABASE_URL = '';        // e.g. 'https://abcdefgh.supabase.co'
-const SUPABASE_ANON_KEY = '';   // e.g. 'eyJhbGciOi...'
+const SUPABASE_URL = 'https://zwyqdjbldzdlznsystqx.supabase.co';   // base project URL (no /rest/v1/)
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3eXFkamJsZHpkbHpuc3lzdHF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTE1NDIsImV4cCI6MjA5NzE2NzU0Mn0.3raP6hFR25_TywRtlKraalv79DI5d0Xj5Q5XzHcjjF0';   // public anon key (safe in client; protected by RLS)
 
 const supa = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
