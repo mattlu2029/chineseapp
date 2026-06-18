@@ -111,6 +111,16 @@
   }
 
   /* FILTER TABS */
+  .browse-search-wrap { position: relative; margin-bottom: 20px; }
+  .browse-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: .6; pointer-events: none; }
+  .browse-search {
+    width: 100%; padding: 12px 16px 12px 42px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 15px;
+  }
+  .browse-search:focus { outline: none; border-color: var(--gold); }
+  .browse-search::placeholder { color: var(--muted); }
+  .browse-empty { color: var(--muted); font-size: 15px; padding: 32px 4px; }
   .filter-label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; }
   .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .browse-count { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
@@ -621,6 +631,10 @@
 <div class="view active" id="view-browse">
   <h1>Character Library</h1>
   <p class="subtitle">Click any character to see stroke order, pronunciation, and examples</p>
+  <div class="browse-search-wrap">
+    <span class="browse-search-icon">🔍</span>
+    <input type="search" id="browse-search" class="browse-search" placeholder="Search by character, pinyin, or meaning…" oninput="onBrowseSearch(this.value)" autocomplete="off">
+  </div>
   <div class="filter-label">Level</div>
   <div class="filter-tabs" id="browse-filters"></div>
   <div class="filter-label">Part of speech</div>
@@ -2547,8 +2561,19 @@ function showView(id) {
 let browseFilter = 'all';
 let browseHsk = 0; // 0 = all
 let browsePos = 'all'; // 'all' or a POS bucket
+let browseSearch = ''; // search query (char, pinyin, or meaning)
 let openChar = null;
 let browseWriter = null;
+
+// Strip tone marks / diacritics so "shui" matches "shuǐ" and "lu"/"lv" match "lǜ".
+function stripTones(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/v/g, 'u').toLowerCase();
+}
+
+function onBrowseSearch(v) {
+  browseSearch = (v || '').trim().toLowerCase();
+  renderGrid();
+}
 
 function initBrowse() {
   const ft = document.getElementById('browse-filters');
@@ -2579,11 +2604,25 @@ function renderGrid() {
   let chars = CHARS;
   if (browseHsk > 0) chars = chars.filter(c => c.hsk === browseHsk);
   if (browsePos !== 'all') chars = chars.filter(c => c.pos === browsePos);
+  if (browseSearch) {
+    const q = browseSearch;            // lowercased + trimmed
+    const qp = stripTones(q);          // normalized for pinyin matching
+    chars = chars.filter(c =>
+      c.char.includes(q) ||
+      stripTones(c.pinyin).includes(qp) ||
+      (c.meaning && c.meaning.toLowerCase().includes(q))
+    );
+  }
   document.getElementById('browse-count').textContent =
     chars.length + ' character' + (chars.length === 1 ? '' : 's')
+    + (browseSearch ? ' matching “' + browseSearch + '”' : '')
     + (browsePos !== 'all' ? ' · ' + POS_LABELS[browsePos] : '')
     + (browseHsk > 0 ? ' · HSK ' + browseHsk : '');
   grid.innerHTML = '';
+  if (!chars.length) {
+    grid.innerHTML = '<div class="browse-empty">No characters found. Try a different search, level, or part of speech.</div>';
+    return;
+  }
   chars.forEach(c => {
     const div = document.createElement('div');
     div.className = 'char-card' + (state.mastered[c.char] ? ' mastered' : '');
