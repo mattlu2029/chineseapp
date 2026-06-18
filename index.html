@@ -2607,11 +2607,20 @@ function renderGrid() {
   if (browseSearch) {
     const q = browseSearch;            // lowercased + trimmed
     const qp = stripTones(q);          // normalized for pinyin matching
-    chars = chars.filter(c =>
-      c.char.includes(q) ||
-      stripTones(c.pinyin).includes(qp) ||
-      (c.meaning && c.meaning.toLowerCase().includes(q))
-    );
+    // Rank matches: 0 = exact pinyin / exact character, 1 = similar (partial)
+    // pinyin, 2 = English-meaning match. Stable sort keeps frequency order within a tier.
+    const ranked = [];
+    for (const c of chars) {
+      const py = stripTones(c.pinyin);
+      const meaning = (c.meaning || '').toLowerCase();
+      let tier = -1;
+      if (c.char === q || py === qp) tier = 0;
+      else if (c.char.includes(q) || py.includes(qp)) tier = 1;
+      else if (meaning.includes(q)) tier = 2;
+      if (tier >= 0) ranked.push({ c, tier });
+    }
+    ranked.sort((a, b) => a.tier - b.tier);
+    chars = ranked.map(r => r.c);
   }
   document.getElementById('browse-count').textContent =
     chars.length + ' character' + (chars.length === 1 ? '' : 's')
