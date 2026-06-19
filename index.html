@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>汉字学习 · Learn Chinese Characters</title>
+<title>Stroke by Stroke · Learn Chinese Characters</title>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -521,7 +521,7 @@
 <!-- AUTH GATE -->
 <div id="auth-gate">
   <div class="auth-card">
-    <div class="auth-logo">汉字 <span>学习</span></div>
+    <div class="auth-logo">Stroke by <span>Stroke</span></div>
     <p class="auth-tagline">Learn to read &amp; write Chinese characters</p>
 
     <div class="auth-tabs">
@@ -539,11 +539,6 @@
       <label class="auth-label">Email</label>
       <input type="email" id="auth-email" class="auth-input" placeholder="you@example.com" autocomplete="email">
 
-      <div id="auth-name-row" style="display:none">
-        <label class="auth-label">Display name</label>
-        <input type="text" id="auth-name" class="auth-input" placeholder="What should we call you?" autocomplete="nickname">
-      </div>
-
       <label class="auth-label">Password</label>
       <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
 
@@ -552,53 +547,38 @@
         <input type="password" id="auth-password2" class="auth-input" placeholder="••••••••" autocomplete="new-password">
       </div>
 
-      <div id="auth-secq-row" style="display:none">
-        <label class="auth-label">Security question (for password recovery)</label>
-        <select id="auth-secq" class="auth-input">
-          <option value="What was the name of your first pet?">What was the name of your first pet?</option>
-          <option value="What city were you born in?">What city were you born in?</option>
-          <option value="What was the name of your elementary school?">What was the name of your elementary school?</option>
-          <option value="What is your favorite book?">What is your favorite book?</option>
-          <option value="What was your childhood nickname?">What was your childhood nickname?</option>
-        </select>
-        <input type="text" id="auth-seca" class="auth-input" style="margin-top:8px" placeholder="Your answer" autocomplete="off">
-      </div>
-
       <div class="auth-error" id="auth-error"></div>
 
       <button type="submit" class="btn btn-primary auth-submit" id="auth-submit" onclick="submitAuth()">Log In</button>
     </form>
 
-    <div id="auth-forgot" style="text-align:center;margin-top:12px">
+    <div id="auth-forgot" style="text-align:center;margin-top:12px;display:none">
       <a href="#" class="auth-link" onclick="enterResetMode();return false;">Forgot password?</a>
     </div>
 
-    <!-- PASSWORD RESET PANEL (local mode: security-question recovery) -->
+    <!-- PASSWORD RESET: email a reset link -->
     <div id="reset-panel" style="display:none">
       <h3 style="text-align:center;color:var(--gold);font-size:16px;margin-bottom:4px">Reset your password</h3>
-
-      <div id="reset-step1">
-        <label class="auth-label">Email</label>
-        <input type="email" id="reset-email" class="auth-input" placeholder="you@example.com" autocomplete="email">
-        <div class="auth-error" id="reset-error1"></div>
-        <button class="btn btn-primary auth-submit" id="reset-find-btn" onclick="resetFindAccount()">Continue</button>
-      </div>
-
-      <div id="reset-step2" style="display:none">
-        <label class="auth-label">Security question</label>
-        <div id="reset-question" class="reset-question"></div>
-        <input type="text" id="reset-answer" class="auth-input" placeholder="Your answer" autocomplete="off">
-        <label class="auth-label">New password</label>
-        <input type="password" id="reset-newpw" class="auth-input" placeholder="••••••••" autocomplete="new-password">
-        <label class="auth-label">Confirm new password</label>
-        <input type="password" id="reset-newpw2" class="auth-input" placeholder="••••••••" autocomplete="new-password">
-        <div class="auth-error" id="reset-error2"></div>
-        <button class="btn btn-primary auth-submit" id="reset-submit-btn" onclick="resetSubmit()">Reset Password</button>
-      </div>
-
+      <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px">Enter your account email and we'll send you a link to reset your password.</p>
+      <label class="auth-label">Email</label>
+      <input type="email" id="reset-email" class="auth-input" placeholder="you@example.com" autocomplete="email">
+      <div class="auth-error" id="reset-error1"></div>
+      <div id="reset-msg" style="color:var(--green);font-size:13px;margin-bottom:6px"></div>
+      <button class="btn btn-primary auth-submit" id="reset-send-btn" onclick="sendResetEmail()">Send reset link</button>
       <div style="text-align:center;margin-top:12px">
         <a href="#" class="auth-link" onclick="switchAuthTab('login');return false;">← Back to login</a>
       </div>
+    </div>
+
+    <!-- SET NEW PASSWORD (after following the email recovery link) -->
+    <div id="newpw-panel" style="display:none">
+      <h3 style="text-align:center;color:var(--gold);font-size:16px;margin-bottom:10px">Set a new password</h3>
+      <label class="auth-label">New password</label>
+      <input type="password" id="newpw" class="auth-input" placeholder="••••••••" autocomplete="new-password">
+      <label class="auth-label">Confirm new password</label>
+      <input type="password" id="newpw2" class="auth-input" placeholder="••••••••" autocomplete="new-password">
+      <div class="auth-error" id="newpw-error"></div>
+      <button class="btn btn-primary auth-submit" onclick="submitNewPassword()">Update password &amp; sign in</button>
     </div>
 
     <p class="auth-note" id="auth-note">⚠ Demo authentication — accounts are stored locally in this browser with hashed passwords. Not for sensitive data.</p>
@@ -607,20 +587,19 @@
 
 <!-- CHARACTER LIBRARY LOADING OVERLAY -->
 <div id="char-loading" style="display:none;position:fixed;inset:0;background:rgba(15,15,26,.92);z-index:400;flex-direction:column;align-items:center;justify-content:center;gap:18px">
-  <div class="logo" style="font-size:34px">汉字 <span>学习</span></div>
+  <div class="logo" style="font-size:34px">Stroke by <span>Stroke</span></div>
   <div class="char-spinner"></div>
   <div id="char-loading-text" style="color:var(--muted);font-size:14px">Loading character library…</div>
 </div>
 
 <nav id="main-nav" style="display:none">
-  <div class="logo">汉字 <span>学习</span></div>
+  <div class="logo">Stroke by <span>Stroke</span></div>
   <button onclick="showView('browse')" id="nav-browse" class="active">Browse</button>
   <button onclick="showView('flashcards')" id="nav-flashcards">Flashcards</button>
   <button onclick="showView('quiz')" id="nav-quiz">Quiz</button>
   <button onclick="showView('reading')" id="nav-reading">Reading</button>
   <button onclick="showView('stats')" id="nav-stats">Stats</button>
   <div class="nav-user" id="nav-user">
-    <span id="nav-user-name"></span>
     <button class="nav-logout" onclick="logout()">Log out</button>
   </div>
 </nav>
@@ -2309,16 +2288,16 @@ async function hashPassword(password, saltHex) {
 function switchAuthTab(mode) {
   authMode = mode;
   const register = mode === 'register';
-  // Leaving reset mode: restore the normal form + tabs.
+  // Leaving reset / new-password mode: restore the normal form + tabs.
   document.getElementById('auth-form').style.display = '';
   document.querySelector('.auth-tabs').style.display = 'flex';
   document.getElementById('reset-panel').style.display = 'none';
+  document.getElementById('newpw-panel').style.display = 'none';
   document.getElementById('auth-tab-login').classList.toggle('active', mode === 'login');
   document.getElementById('auth-tab-register').classList.toggle('active', register);
-  document.getElementById('auth-name-row').style.display = register ? 'block' : 'none';
   document.getElementById('auth-confirm-row').style.display = register ? 'block' : 'none';
-  document.getElementById('auth-secq-row').style.display = register ? 'block' : 'none';
-  document.getElementById('auth-forgot').style.display = (mode === 'login' && BACKEND !== 'supabase') ? 'block' : 'none';
+  // Forgot-password (email reset) is shown on the login tab when the cloud backend is active.
+  document.getElementById('auth-forgot').style.display = (mode === 'login' && BACKEND === 'supabase') ? 'block' : 'none';
   // Google sign-in only works with the Supabase backend.
   document.getElementById('google-btn').style.display = BACKEND === 'supabase' ? 'flex' : 'none';
   document.getElementById('auth-divider').style.display = BACKEND === 'supabase' ? 'flex' : 'none';
@@ -2345,23 +2324,17 @@ async function submitAuth() {
   if (password.length < 6) { authError('Password must be at least 6 characters.'); return; }
 
   const registering = authMode === 'register';
-  let name = '', secQ = '', secA = '';
   if (registering) {
-    name = document.getElementById('auth-name').value.trim();
     const password2 = document.getElementById('auth-password2').value;
-    secQ = document.getElementById('auth-secq').value;
-    secA = document.getElementById('auth-seca').value.trim();
-    if (!name) { authError('Please enter a display name.'); return; }
     if (password !== password2) { authError('Passwords do not match.'); return; }
-    if (!secA) { authError('Please answer the security question (needed for password recovery).'); return; }
   }
 
   setSubmitting(true);
   try {
     if (BACKEND === 'supabase') {
-      await (registering ? supabaseRegister(email, password, name) : supabaseLogin(email, password));
+      await (registering ? supabaseRegister(email, password) : supabaseLogin(email, password));
     } else {
-      await (registering ? localRegister(email, password, name, secQ, secA) : localLogin(email, password));
+      await (registering ? localRegister(email, password) : localLogin(email, password));
     }
   } catch (err) {
     authError(err.message || 'Something went wrong. Please try again.');
@@ -2371,10 +2344,8 @@ async function submitAuth() {
 }
 
 // ── Supabase backend ──
-async function supabaseRegister(email, password, name) {
-  const { data, error } = await supa.auth.signUp({
-    email, password, options: { data: { name } }
-  });
+async function supabaseRegister(email, password) {
+  const { data, error } = await supa.auth.signUp({ email, password });
   if (error) throw error;
   if (!data.session) {
     // Email-confirmation is enabled on the project; user must confirm before first login.
@@ -2402,21 +2373,18 @@ async function signInWithGoogle() {
 }
 
 function userFromSupabase(u) {
-  return { id: u.id, email: u.email, name: (u.user_metadata && u.user_metadata.name) || u.email.split('@')[0] };
+  return { id: u.id, email: u.email };
 }
 
 // ── Local (demo) backend ──
-function normalizeAnswer(a) { return (a || '').trim().toLowerCase().replace(/\s+/g, ' '); }
-
-async function localRegister(email, password, name, secQ, secA) {
+async function localRegister(email, password) {
   const accounts = getAccounts();
   if (accounts[email]) throw new Error('An account with this email already exists.');
   const { hash, salt } = await hashPassword(password);
-  const sec = await hashPassword(normalizeAnswer(secA));   // hash the security answer too
-  accounts[email] = { email, name, hash, salt, secQ, secHash: sec.hash, secSalt: sec.salt, created: Date.now() };
+  accounts[email] = { email, hash, salt, created: Date.now() };
   saveAccounts(accounts);
   setLocalSession(email);
-  await enterApp({ email, name });
+  await enterApp({ email });
 }
 
 async function localLogin(email, password) {
@@ -2425,71 +2393,65 @@ async function localLogin(email, password) {
   const { hash } = await hashPassword(password, acct.salt);
   if (hash !== acct.hash) throw new Error('Incorrect password.');
   setLocalSession(email);
-  await enterApp({ email: acct.email, name: acct.name });
+  await enterApp({ email: acct.email });
 }
 
-// ── Password reset (local mode: security-question recovery) ──
-let resetEmail = null;
-
+// ── Password reset via email (Supabase) ──
 function enterResetMode() {
-  // Supabase mode would use supa.auth.resetPasswordForEmail instead; here we do local recovery.
   document.getElementById('auth-form').style.display = 'none';
   document.querySelector('.auth-tabs').style.display = 'none';
   document.getElementById('auth-forgot').style.display = 'none';
   document.getElementById('google-btn').style.display = 'none';
   document.getElementById('auth-divider').style.display = 'none';
+  document.getElementById('newpw-panel').style.display = 'none';
   document.getElementById('reset-panel').style.display = 'block';
-  document.getElementById('reset-step1').style.display = 'block';
-  document.getElementById('reset-step2').style.display = 'none';
   document.getElementById('reset-error1').textContent = '';
-  document.getElementById('reset-error2').textContent = '';
+  document.getElementById('reset-msg').textContent = '';
   document.getElementById('reset-email').value = document.getElementById('auth-email').value;
-  resetEmail = null;
 }
 
-function resetFindAccount() {
+async function sendResetEmail() {
   const err = document.getElementById('reset-error1');
-  err.textContent = '';
+  const msg = document.getElementById('reset-msg');
+  err.textContent = ''; msg.textContent = '';
   const email = document.getElementById('reset-email').value.trim().toLowerCase();
   if (!validEmail(email)) { err.textContent = 'Please enter a valid email address.'; return; }
-  const acct = getAccounts()[email];
-  if (!acct) { err.textContent = 'No account found for that email.'; return; }
-  if (!acct.secQ || !acct.secHash) { err.textContent = 'This account has no recovery question set, so it can\'t be reset.'; return; }
-  resetEmail = email;
-  document.getElementById('reset-question').textContent = acct.secQ;
-  document.getElementById('reset-step1').style.display = 'none';
-  document.getElementById('reset-step2').style.display = 'block';
-  document.getElementById('reset-answer').value = '';
-  document.getElementById('reset-newpw').value = '';
-  document.getElementById('reset-newpw2').value = '';
+  if (BACKEND !== 'supabase') { err.textContent = 'Password recovery requires the cloud backend.'; return; }
+  const btn = document.getElementById('reset-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const redirectTo = location.href.split('#')[0].split('?')[0];
+    const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) { err.textContent = error.message; return; }
+    msg.textContent = 'If an account exists for ' + email + ', a password reset link is on its way. Check your inbox.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send reset link';
+  }
 }
 
-async function resetSubmit() {
-  const err = document.getElementById('reset-error2');
-  err.textContent = '';
-  const acct = getAccounts()[resetEmail];
-  if (!acct) { err.textContent = 'Account not found. Start over.'; return; }
-  const answer = document.getElementById('reset-answer').value;
-  const pw = document.getElementById('reset-newpw').value;
-  const pw2 = document.getElementById('reset-newpw2').value;
-  if (!answer.trim()) { err.textContent = 'Please answer the security question.'; return; }
-  if (pw.length < 6) { err.textContent = 'New password must be at least 6 characters.'; return; }
-  if (pw !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+// Shown when the user returns via the email recovery link (PASSWORD_RECOVERY event).
+function showNewPasswordPanel() {
+  document.getElementById('auth-gate').style.display = 'flex';
+  document.getElementById('auth-form').style.display = 'none';
+  document.querySelector('.auth-tabs').style.display = 'none';
+  document.getElementById('auth-forgot').style.display = 'none';
+  document.getElementById('google-btn').style.display = 'none';
+  document.getElementById('auth-divider').style.display = 'none';
+  document.getElementById('reset-panel').style.display = 'none';
+  document.getElementById('newpw-error').textContent = '';
+  document.getElementById('newpw-panel').style.display = 'block';
+}
 
-  const btn = document.getElementById('reset-submit-btn');
-  btn.disabled = true; btn.textContent = 'Please wait…';
-  try {
-    const check = await hashPassword(normalizeAnswer(answer), acct.secSalt);
-    if (check.hash !== acct.secHash) { err.textContent = 'That answer is incorrect.'; return; }
-    // Answer verified — set the new password.
-    const { hash, salt } = await hashPassword(pw);
-    acct.hash = hash; acct.salt = salt;
-    const accounts = getAccounts(); accounts[resetEmail] = acct; saveAccounts(accounts);
-    setLocalSession(resetEmail);
-    await enterApp({ email: acct.email, name: acct.name });   // log straight in with the new password
-  } finally {
-    btn.disabled = false; btn.textContent = 'Reset Password';
-  }
+async function submitNewPassword() {
+  const err = document.getElementById('newpw-error');
+  err.textContent = '';
+  const pw = document.getElementById('newpw').value;
+  const pw2 = document.getElementById('newpw2').value;
+  if (pw.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pw !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+  const { data, error } = await supa.auth.updateUser({ password: pw });
+  if (error) { err.textContent = error.message; return; }
+  await enterApp(userFromSupabase(data.user));   // recovery session is active — go straight in
 }
 
 // ── Shared session lifecycle ──
@@ -2516,7 +2478,6 @@ async function enterApp(user) {
 
   document.getElementById('main-nav').style.display = 'flex';
   document.getElementById('main-content').style.display = 'block';
-  document.getElementById('nav-user-name').textContent = '👤 ' + user.name;
 
   bootApp();
 }
@@ -3647,13 +3608,19 @@ function bootApp() {
 document.getElementById('auth-form').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); submitAuth(); }
 });
-// Enter support inside the password-reset panel.
+// Enter support inside the password-reset panels.
 document.getElementById('reset-email').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); resetFindAccount(); }
+  if (e.key === 'Enter') { e.preventDefault(); sendResetEmail(); }
 });
-document.getElementById('reset-newpw2').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); resetSubmit(); }
+document.getElementById('newpw2').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); submitNewPassword(); }
 });
+// When the user returns via the password-reset email link, show the new-password form.
+if (supa) {
+  supa.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') showNewPasswordPanel();
+  });
+}
 // Escape closes the writing practice sheet.
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('writing-sheet').classList.contains('open')) closeWritingSheet();
