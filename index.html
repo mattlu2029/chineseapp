@@ -2256,10 +2256,13 @@ let authMode = 'login';
 function getAccounts() { return JSON.parse(localStorage.getItem('zh_accounts') || '{}'); }
 function saveAccounts(a) { localStorage.setItem('zh_accounts', JSON.stringify(a)); }
 
-// ── Local session with a 5-day expiry ──
-const SESSION_DAYS = 5;
+// ── Auto-login expiry: stay signed in for 3 days, then require login again ──
+const SESSION_DAYS = 3;
+const SESSION_MS = SESSION_DAYS * 86400000;
+
+// Local (demo) backend session.
 function setLocalSession(email) {
-  localStorage.setItem('zh_session', JSON.stringify({ email, expires: Date.now() + SESSION_DAYS * 86400000 }));
+  localStorage.setItem('zh_session', JSON.stringify({ email, expires: Date.now() + SESSION_MS }));
 }
 function getLocalSession() {
   const raw = localStorage.getItem('zh_session');
@@ -2269,6 +2272,11 @@ function getLocalSession() {
   if (!s || !s.email || !s.expires || Date.now() > s.expires) { localStorage.removeItem('zh_session'); return null; }
   return s;
 }
+
+// Supabase keeps its own (long-lived, auto-refreshing) session, so we layer a 3-day
+// cap on top: stamp the login time, and on restore sign out if it's older than 3 days.
+function setSupaExpiry() { localStorage.setItem('zh_supa_expiry', String(Date.now() + SESSION_MS)); }
+function clearSupaExpiry() { localStorage.removeItem('zh_supa_expiry'); }
 
 const enc = new TextEncoder();
 function bufToHex(buf) { return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join(''); }
@@ -2353,12 +2361,14 @@ async function supabaseRegister(email, password) {
     authError('Account created! Check your email to confirm, then log in.');
     return;
   }
+  setSupaExpiry();
   await enterApp(userFromSupabase(data.user));
 }
 
 async function supabaseLogin(email, password) {
   const { data, error } = await supa.auth.signInWithPassword({ email, password });
   if (error) throw error;
+  setSupaExpiry();
   await enterApp(userFromSupabase(data.user));
 }
 
@@ -2451,6 +2461,7 @@ async function submitNewPassword() {
   if (pw !== pw2) { err.textContent = 'Passwords do not match.'; return; }
   const { data, error } = await supa.auth.updateUser({ password: pw });
   if (error) { err.textContent = error.message; return; }
+  setSupaExpiry();
   await enterApp(userFromSupabase(data.user));   // recovery session is active — go straight in
 }
 
@@ -2484,6 +2495,7 @@ async function enterApp(user) {
 
 async function logout() {
   if (BACKEND === 'supabase') { try { await supa.auth.signOut(); } catch (e) {} }
+  clearSupaExpiry();
   localStorage.removeItem('zh_session');
   currentUser = null;
   state = blankState();
@@ -2497,7 +2509,18 @@ async function logout() {
 async function restoreSession() {
   if (BACKEND === 'supabase') {
     const { data } = await supa.auth.getSession();
-    if (data.session) { await enterApp(userFromSupabase(data.session.user)); return; }
+    if (data.session) {
+      const expiry = +localStorage.getItem('zh_supa_expiry') || 0;
+      if (expiry && Date.now() > expiry) {
+        // 3-day auto-login window elapsed — sign out and require login again.
+        clearSupaExpiry();
+        try { await supa.auth.signOut(); } catch (e) {}
+      } else {
+        if (!expiry) setSupaExpiry();   // first restore (e.g. just back from Google OAuth)
+        await enterApp(userFromSupabase(data.session.user));
+        return;
+      }
+    }
   } else {
     const sess = getLocalSession();   // null if missing or expired (>5 days)
     const acct = sess ? getAccounts()[sess.email] : null;
