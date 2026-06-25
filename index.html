@@ -52,6 +52,7 @@
     flex-shrink: 0;
   }
   .logo span { color: var(--gold); }
+  .nav-links { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
   nav button {
     background: none;
     border: none;
@@ -442,15 +443,6 @@
   .reading-tooltip { display: none; }
 
   /* RESPONSIVE */
-  @media (max-width: 600px) {
-    nav { padding: 0 12px; }
-    nav button { padding: 6px 10px; font-size: 13px; }
-    main { padding: 20px 16px; }
-    .fc-char { font-size: 72px; }
-    .quiz-char { font-size: 64px; }
-    .quiz-options { grid-template-columns: 1fr; }
-  }
-
   /* AUTH GATE */
   #auth-gate {
     position: fixed; inset: 0;
@@ -524,6 +516,35 @@
     padding: 8px 12px !important; border-radius: 8px; cursor: pointer; font-size: 13px;
   }
   .nav-logout:hover { border-color: var(--red); color: var(--red) !important; }
+
+  /* ── MOBILE (kept last so these override the component rules above) ── */
+  @media (max-width: 600px) {
+    /* Nav: logo top-left, Profile top-right, tab buttons in a scrollable strip below */
+    nav { padding: 8px 14px; row-gap: 8px; }
+    .logo { font-size: 19px; }
+    .nav-user { order: 1; }
+    .nav-links {
+      order: 2; flex-basis: 100%; flex-wrap: nowrap;
+      overflow-x: auto; gap: 6px;
+      margin: 2px -14px 0; padding: 2px 14px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links button { flex-shrink: 0; padding: 7px 12px; font-size: 13px; }
+
+    main { padding: 18px 16px; }
+    h1 { font-size: 24px; }
+    .fc-char { font-size: 72px; }
+    .quiz-char { font-size: 64px; }
+    .quiz-options { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .detail-panel { padding: 20px 16px; }
+    .detail-top { gap: 16px; }
+    .detail-char { font-size: 72px; }
+    .deck-select, .stats-grid, .passage-select { grid-template-columns: 1fr 1fr; }
+    .reading-selected { flex-direction: column; align-items: flex-start; text-align: left; }
+    .reading-passage { font-size: 20px; }
+  }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
@@ -606,11 +627,13 @@
 
 <nav id="main-nav" style="display:none">
   <div class="logo">Stroke <span style="color:#ee7430">by</span> <span>Stroke</span></div>
-  <button onclick="showView('browse')" id="nav-browse" class="active">Browse</button>
-  <button onclick="showView('flashcards')" id="nav-flashcards">Flashcards</button>
-  <button onclick="showView('quiz')" id="nav-quiz">Quiz</button>
-  <button onclick="showView('reading')" id="nav-reading">Reading</button>
-  <button onclick="showView('stats')" id="nav-stats">Stats</button>
+  <div class="nav-links" id="nav-links">
+    <button onclick="showView('browse')" id="nav-browse" class="active">Browse</button>
+    <button onclick="showView('flashcards')" id="nav-flashcards">Flashcards</button>
+    <button onclick="showView('quiz')" id="nav-quiz">Quiz</button>
+    <button onclick="showView('reading')" id="nav-reading">Reading</button>
+    <button onclick="showView('stats')" id="nav-stats">Stats</button>
+  </div>
   <div class="nav-user" id="nav-user">
     <button class="nav-profile" id="nav-profile-btn" onclick="toggleProfileMenu(event)">👤 Profile</button>
     <div class="profile-menu" id="profile-menu">
