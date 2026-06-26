@@ -544,6 +544,12 @@
     .deck-select, .stats-grid, .passage-select { grid-template-columns: 1fr 1fr; }
     .reading-selected { flex-direction: column; align-items: flex-start; text-align: left; }
     .reading-passage { font-size: 20px; }
+
+    /* Writing sheet: stack the squares so the writing box is large for finger input */
+    .writing-sheet { max-width: 100%; }
+    .writing-squares { flex-direction: column; align-items: center; gap: 12px; }
+    .writing-square-wrap { width: 100%; max-width: 100%; }
+    .writing-square-wrap:first-child { max-width: 150px; }   /* compact stroke-order reference */
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2819,7 +2825,7 @@ function wsRenderQuiz(char) {
   // RIGHT square — faint guide + free-draw canvas that keeps the user's actual ink.
   renderGuide(document.getElementById('ws-guide'), char, 200);
   if (wsCanvasCtl) wsCanvasCtl.destroy();
-  wsCanvasCtl = makeFreeDraw(document.getElementById('ws-canvas'), { color: '#e94560', lineWidth: 8 });
+  wsCanvasCtl = makeFreeDraw(document.getElementById('ws-canvas'), { color: '#e94560', lineWidth: 7 });
 }
 
 // Replay the stroke order in the LEFT (reference) square — the drawing square is untouched.
@@ -3185,7 +3191,8 @@ function makeFreeDraw(canvas, opts) {
   canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', up);
   canvas.addEventListener('pointercancel', up);
-  requestAnimationFrame(fit);
+  fit();                       // size now if the canvas is already laid out
+  requestAnimationFrame(fit);  // and again next frame as a fallback
 
   return {
     clear() { strokes = []; redraw(); },
