@@ -2686,10 +2686,17 @@ function renderGrid() {
 }
 
 function closeDetail() {
+  const ch = openChar ? openChar.char : null;
   document.getElementById('detail-panel').classList.remove('open');
   document.getElementById('stroke-writer').innerHTML = '';
   browseWriter = null;
   openChar = null;
+  // Return to the character's card in the grid instead of staying at the top.
+  if (ch) {
+    const card = [...document.querySelectorAll('#char-grid .char-card')]
+      .find(el => { const h = el.querySelector('.hanzi'); return h && h.textContent === ch; });
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 function openDetail(c) {
@@ -2834,13 +2841,23 @@ function wsMarkLearned() {
 
 function closeWritingSheet() {
   clearTimeout(wsRenderTimer);
-  document.getElementById('writing-sheet-overlay').classList.remove('open');
   const sheet = document.getElementById('writing-sheet');
+  document.getElementById('writing-sheet-overlay').classList.remove('open');
   sheet.classList.remove('open');
-  sheet.style.transform = 'translateY(110vh)';   // slide back down
+  // FLIP (mirrors openWritingSheet): commit the current open position with no
+  // transition, force a reflow, then transition to the closed position so the
+  // slide-down reliably animates instead of snapping.
+  sheet.style.transition = 'none';
+  sheet.style.transform = 'translateY(0)';
+  void sheet.offsetWidth;
+  sheet.style.transition = 'transform .32s cubic-bezier(.2,.8,.2,1)';
+  sheet.style.transform = 'translateY(110vh)';
   document.body.style.overflow = '';
-  if (wsCanvasCtl) { wsCanvasCtl.destroy(); wsCanvasCtl = null; }
-  wsWriter = null; wsReference = null; wsChar = null;
+  // Tear down the (heavy) stroke writers only after the slide-down finishes.
+  setTimeout(() => {
+    if (wsCanvasCtl) { wsCanvasCtl.destroy(); wsCanvasCtl = null; }
+    wsWriter = null; wsReference = null; wsChar = null;
+  }, 330);
 }
 
 // ─── FLASHCARDS ──────────────────────────────────────────────────────────────
