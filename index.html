@@ -545,11 +545,17 @@
     .reading-selected { flex-direction: column; align-items: flex-start; text-align: left; }
     .reading-passage { font-size: 20px; }
 
-    /* Writing sheet: stack the squares so the writing box is large for finger input */
-    .writing-sheet { max-width: 100%; }
-    .writing-squares { flex-direction: column; align-items: center; gap: 12px; }
-    .writing-square-wrap { width: 100%; max-width: 100%; }
-    .writing-square-wrap:first-child { max-width: 150px; }   /* compact stroke-order reference */
+    /* Writing sheet: stack the squares (bigger writing box than side-by-side) but keep
+       it compact enough that the action buttons stay visible without scrolling. */
+    .writing-sheet { max-width: 100%; padding: 8px 18px 16px; }
+    .sheet-header { margin-bottom: 10px; }
+    .sheet-header .ws-char { font-size: 38px; }
+    .writing-squares { flex-direction: column; align-items: center; gap: 6px; }
+    .writing-square-wrap { width: 100%; gap: 3px; }
+    .writing-square-wrap:first-child { max-width: 88px; }     /* compact stroke-order reference */
+    .writing-square-wrap:last-child { max-width: 200px; }     /* the writing box */
+    .sheet-actions { gap: 6px; margin-top: 8px; }
+    .sheet-actions .btn { padding: 7px 11px; font-size: 12px; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
