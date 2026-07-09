@@ -3660,9 +3660,16 @@ let sentencesLoaded = false;
 const SENT_URL = 'https://cdn.jsdelivr.net/gh/mcodelook/ChineseWordSeg-SentencesExamples@main/ChineseWordSeg-SentencesExamples.csv';
 const SENT_CACHE_KEY = 'zh_sentences_v1';
 
+// Manual sentence overrides — used to replace corpus sentences that are unsuitable
+// (e.g. violent). These take precedence over the fetched corpus, even when cached.
+const SENTENCE_OVERRIDES = {
+  '们': { zh: '他们是我的朋友。', en: 'They are my friends.', py: 'tāmen shì wǒ de péngyou' },
+};
+
 function applySentences(map) {
   let n = 0;
   for (const c of CHARS) if (!c.sentence && map[c.char]) { c.sentence = map[c.char]; n++; }
+  for (const c of CHARS) if (SENTENCE_OVERRIDES[c.char]) c.sentence = SENTENCE_OVERRIDES[c.char];  // force-override
   return n;
 }
 
